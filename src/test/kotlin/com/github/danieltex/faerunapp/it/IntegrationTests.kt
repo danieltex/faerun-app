@@ -1,6 +1,8 @@
 package com.github.danieltex.faerunapp.it
 
-import com.github.danieltex.faerunapp.entities.WaterPocket
+import com.github.danieltex.faerunapp.dto.WaterPocketBatchDTO
+import com.github.danieltex.faerunapp.dto.WaterPocketDTO
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -16,9 +18,9 @@ import org.springframework.http.MediaType
 class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @Test
     fun `Assert create water pocket returns valid object with id`() {
-        val waterPocket = WaterPocket(null, "Callagan", "700.20".toBigDecimal())
+        val waterPocket = WaterPocketDTO(null, "Callagan", "700.20".toBigDecimal())
 
-        val response = restTemplate.postForEntity("/water-pockets", waterPocket, WaterPocket::class.java)
+        val response = restTemplate.postForEntity("/water-pockets", waterPocket, WaterPocketDTO::class.java)
 
         assertEquals(HttpStatus.CREATED, response.statusCode)
         assertNotNull(response.body?.id, "WaterPocket ID was null")
@@ -41,4 +43,44 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
     }
 
+    @Test
+    fun `Assert can create and retrieve a water pocket by id`() {
+        val waterPocket = WaterPocketDTO(null, "Rei", "1000.1".toBigDecimal())
+
+        val postResponse = restTemplate.postForEntity("/water-pockets", waterPocket, WaterPocketDTO::class.java)
+        val getResponse = restTemplate.getForEntity("/water-pockets/${postResponse.body!!.id}", WaterPocketDTO::class.java)
+
+        assertEquals(postResponse.body!!.id, getResponse.body!!.id)
+        assertEquals(waterPocket.name, getResponse.body!!.name)
+        assertEquals(waterPocket.storage.toDouble(), getResponse.body!!.storage.toDouble())
+    }
+
+    @Test
+    fun `Assert returns NOT FOUND status when get for non existing water pocket`() {
+        val nonExistingId = 999
+
+        val getResponse = restTemplate.getForEntity("/water-pockets/$nonExistingId", WaterPocketDTO::class.java)
+
+        assertEquals(HttpStatus.NOT_FOUND, getResponse.statusCode)
+    }
+
+    @Test
+    fun `Assert can retrieve created water pockets`() {
+        val wpRequests = listOf(
+            WaterPocketDTO(null, "Alpha", "1000.1".toBigDecimal()),
+            WaterPocketDTO(null, "Beta", "1000.1".toBigDecimal()),
+            WaterPocketDTO(null, "Gamma", "1000.1".toBigDecimal())
+        )
+
+        val wpResponses = wpRequests
+            .map {
+                restTemplate.postForEntity("/water-pockets", it, WaterPocketDTO::class.java)
+            }
+            .map { it.body!! }
+        val getBatchResponse = restTemplate.getForEntity("/water-pockets", WaterPocketBatchDTO::class.java)
+
+        assertThat(getBatchResponse.body!!.waterPockets)
+            .usingElementComparatorIgnoringFields("storage")
+            .containsAll(wpResponses)
+    }
 }

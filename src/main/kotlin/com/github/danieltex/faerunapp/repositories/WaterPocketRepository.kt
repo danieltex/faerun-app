@@ -1,6 +1,6 @@
 package com.github.danieltex.faerunapp.repositories
 
-import com.github.danieltex.faerunapp.entities.WaterPocket
+import com.github.danieltex.faerunapp.entities.WaterPocketEntity
 import org.springframework.data.repository.PagingAndSortingRepository
 
-interface WaterPocketRepository : PagingAndSortingRepository<WaterPocket, Int>
+interface WaterPocketRepository : PagingAndSortingRepository<WaterPocketEntity, Int>
