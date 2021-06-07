@@ -5,6 +5,7 @@ import com.github.danieltex.faerunapp.exceptions.WaterPocketNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -31,6 +32,12 @@ class ControllerExceptionHandler {
     fun unknownException(ex: Throwable): ResponseEntity<String> {
         logger.error("Unhandled exception", ex)
         return ResponseEntity(ex.message, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException): ResponseEntity<String> {
+        return ResponseEntity("Malformed request body. Check de API documentation", HttpStatus.BAD_REQUEST)
     }
 
     companion object {
