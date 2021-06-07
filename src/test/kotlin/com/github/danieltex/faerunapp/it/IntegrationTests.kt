@@ -59,9 +59,10 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     fun `Assert returns NOT FOUND status when get for non existing water pocket`() {
         val nonExistingId = 999
 
-        val getResponse = restTemplate.getForEntity("/water-pockets/$nonExistingId", WaterPocketDTO::class.java)
+        val getResponse = restTemplate.getForEntity("/water-pockets/$nonExistingId", String::class.java)
 
         assertEquals(HttpStatus.NOT_FOUND, getResponse.statusCode)
+        assertEquals("Water Pocket '999' not found", getResponse.body)
     }
 
     @Test

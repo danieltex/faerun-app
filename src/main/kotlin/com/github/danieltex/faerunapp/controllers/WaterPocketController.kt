@@ -1,5 +1,6 @@
 package com.github.danieltex.faerunapp.controllers
 
+import com.github.danieltex.faerunapp.dto.LoanRequestDTO
 import com.github.danieltex.faerunapp.dto.WaterPocketBatchDTO
 import com.github.danieltex.faerunapp.dto.WaterPocketDTO
 import com.github.danieltex.faerunapp.dto.toDTO
@@ -8,7 +9,6 @@ import com.github.danieltex.faerunapp.entities.WaterPocketEntity
 import com.github.danieltex.faerunapp.services.WaterPocketService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -45,6 +45,11 @@ class WaterPocketController(
         return waterPocketService.findById(id).toDTO()
     }
 
-        }
+    @PostMapping("/{id}/borrow")
+    fun borrow(
+        @PathVariable("id") toWaterPocketId: Int,
+        @RequestBody loanRequest: LoanRequestDTO
+    ): WaterPocketDTO {
+        return waterPocketService.loan(toWaterPocketId, loanRequest).toDTO()
     }
 }
