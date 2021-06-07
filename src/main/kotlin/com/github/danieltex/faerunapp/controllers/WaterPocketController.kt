@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -27,25 +28,22 @@ class WaterPocketController(
 ) {
 
     @PostMapping
-    fun createWaterPocket(@RequestBody waterPocket: WaterPocketDTO): ResponseEntity<*> {
+    @ResponseStatus(HttpStatus.CREATED)
+    fun createWaterPocket(@RequestBody waterPocket: WaterPocketDTO): WaterPocketDTO {
         val created = waterPocketService.save(waterPocket.toEntity())
-        return ResponseEntity.status(HttpStatus.CREATED).body(created)
+        return created.toDTO()
     }
 
     @GetMapping(consumes = [MediaType.ALL_VALUE])
-    fun getWaterPocketBatch(): ResponseEntity<*> {
+    fun getWaterPocketBatch(): WaterPocketBatchDTO {
         val waterPockets = waterPocketService.findAll().map(WaterPocketEntity::toDTO)
-        val batch = WaterPocketBatchDTO(waterPockets)
-        return ResponseEntity.ok(batch);
+        return WaterPocketBatchDTO(waterPockets)
     }
 
     @GetMapping("/{id}", consumes = [MediaType.ALL_VALUE])
-    fun getWaterPocket(@PathVariable("id") id: Int): ResponseEntity<WaterPocketDTO> {
-        val waterPocket = waterPocketService.findById(id)
-        return if (waterPocket != null) {
-            ResponseEntity.ok(waterPocket.toDTO())
-        } else {
-            ResponseEntity.notFound().build()
+    fun getWaterPocket(@PathVariable("id") id: Int): WaterPocketDTO {
+        return waterPocketService.findById(id).toDTO()
+    }
 
         }
     }
