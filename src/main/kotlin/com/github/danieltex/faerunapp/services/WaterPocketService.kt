@@ -7,5 +7,5 @@ interface WaterPocketService {
     fun save(waterPocket: WaterPocketEntity): WaterPocketEntity
     fun findById(id: Int): WaterPocketEntity
     fun findAll(): List<WaterPocketEntity>
-    fun loan(fromWaterPocketId: Int, loanRequest: LoanRequestDTO): WaterPocketEntity
+    fun loan(toWaterPocketId: Int, loanRequest: LoanRequestDTO): WaterPocketEntity
 }
