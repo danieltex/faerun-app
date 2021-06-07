@@ -18,7 +18,7 @@ import org.springframework.http.MediaType
 class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @Test
     fun `Assert create water pocket returns valid object with id`() {
-        val waterPocket = WaterPocketDTO(null, "Callagan", "700.20".toBigDecimal())
+        val waterPocket = WaterPocketDTO("Callagan", "700.20".toBigDecimal())
 
         val response = restTemplate.postForEntity("/water-pockets", waterPocket, WaterPocketDTO::class.java)
 
@@ -45,7 +45,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
 
     @Test
     fun `Assert can create and retrieve a water pocket by id`() {
-        val waterPocket = WaterPocketDTO(null, "Rei", "1000.1".toBigDecimal())
+        val waterPocket = WaterPocketDTO("Rei", "1000.1".toBigDecimal())
 
         val postResponse = restTemplate.postForEntity("/water-pockets", waterPocket, WaterPocketDTO::class.java)
         val getResponse = restTemplate.getForEntity("/water-pockets/${postResponse.body!!.id}", WaterPocketDTO::class.java)
@@ -67,9 +67,9 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @Test
     fun `Assert can retrieve created water pockets`() {
         val wpRequests = listOf(
-            WaterPocketDTO(null, "Alpha", "1000.1".toBigDecimal()),
-            WaterPocketDTO(null, "Beta", "1000.1".toBigDecimal()),
-            WaterPocketDTO(null, "Gamma", "1000.1".toBigDecimal())
+            WaterPocketDTO("Alpha", "1000.1".toBigDecimal()),
+            WaterPocketDTO("Beta", "1000.1".toBigDecimal()),
+            WaterPocketDTO("Gamma", "1000.1".toBigDecimal())
         )
 
         val wpResponses = wpRequests

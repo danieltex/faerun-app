@@ -10,13 +10,12 @@ import javax.persistence.Table
 @Entity
 @Table(name = "water_pocket")
 class WaterPocketEntity(
+    var name: String,
+    var storage: BigDecimal,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Int?,
-
-    var name: String,
-
-    var storage: BigDecimal
+    var id: Int? = null
 ) {
     override fun toString(): String {
         return "WaterPocket(id=$id, name='$name', storage=$storage)"
