@@ -1,6 +1,7 @@
 package com.github.danieltex.faerunapp.services
 
-import com.github.danieltex.faerunapp.dto.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
 
 interface WaterPocketService {

@@ -6,6 +6,7 @@ plugins {
 	kotlin("jvm") version "1.5.10"
 	kotlin("plugin.spring") version "1.5.10"
 	kotlin("plugin.jpa") version "1.5.10"
+	jacoco
 }
 
 group = "com.github.danieltex"
@@ -43,8 +44,32 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
+tasks.jacocoTestReport {
+	reports {
+		xml.isEnabled = true
+		csv.isEnabled = false
+		html.isEnabled = true
+		html.destination = file("$buildDir/reports/coverage")
+	}
+	dependsOn(tasks.test)
+	finalizedBy(tasks.jacocoTestCoverageVerification)
+	classDirectories.setFrom(
+		sourceSets.main.get().output.asFileTree.matching {
+			exclude(
+				"com/github/danieltex/faerunapp/dtos/**",
+				"com/github/danieltex/faerunapp/entities/**"
+			)
+		}
+	)
+}
+
+
 allOpen {
 	annotation("javax.persistence.Entity")
 	annotation("javax.persistence.Embeddable")
 	annotation("javax.persistence.MappedSuperclass")
+}
+
+jacoco {
+	toolVersion = "0.8.7"
 }

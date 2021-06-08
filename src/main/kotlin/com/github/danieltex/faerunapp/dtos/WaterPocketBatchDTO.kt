@@ -1,4 +1,4 @@
-package com.github.danieltex.faerunapp.dto
+package com.github.danieltex.faerunapp.dtos
 
 import com.fasterxml.jackson.annotation.JsonProperty
 

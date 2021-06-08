@@ -1,8 +1,8 @@
 package com.github.danieltex.faerunapp.it
 
-import com.github.danieltex.faerunapp.dto.LoanRequestDTO
-import com.github.danieltex.faerunapp.dto.WaterPocketBatchDTO
-import com.github.danieltex.faerunapp.dto.WaterPocketDTO
+import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
+import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

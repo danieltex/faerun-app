@@ -1,6 +1,6 @@
 package com.github.danieltex.faerunapp.services.impl
 
-import com.github.danieltex.faerunapp.dto.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.LoanEntityId
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity

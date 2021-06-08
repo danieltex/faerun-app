@@ -1,11 +1,22 @@
 package com.github.danieltex.faerunapp.controllers
 
-import com.github.danieltex.faerunapp.dto.*
+import com.github.danieltex.faerunapp.dtos.DebitListDTO
+import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
+import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
+import com.github.danieltex.faerunapp.dtos.toDTO
+import com.github.danieltex.faerunapp.dtos.toEntity
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
 import com.github.danieltex.faerunapp.services.WaterPocketService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping(

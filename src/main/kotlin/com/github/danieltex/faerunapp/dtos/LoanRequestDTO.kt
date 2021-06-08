@@ -1,4 +1,4 @@
-package com.github.danieltex.faerunapp.dto
+package com.github.danieltex.faerunapp.dtos
 
 import java.math.BigDecimal
 import javax.validation.constraints.DecimalMin
