@@ -90,7 +90,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     }
 
     @Test
-    fun `Assert borrow invalid amount returns bad request status`() {
+    fun `Assert when borrows invalid amount returns bad request status`() {
         val fromWP = WaterPocketDTO("From", "10.00".toBigDecimal())
         val toWP = WaterPocketDTO("To", "0.00".toBigDecimal())
 

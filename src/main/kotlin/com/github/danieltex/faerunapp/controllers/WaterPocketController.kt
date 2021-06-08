@@ -2,6 +2,7 @@ package com.github.danieltex.faerunapp.controllers
 
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
 import com.github.danieltex.faerunapp.dtos.toDTO
@@ -52,6 +53,14 @@ class WaterPocketController(
         @RequestBody loanRequest: LoanRequestDTO
     ): WaterPocketDTO {
         return waterPocketService.loan(toWaterPocketId, loanRequest).toDTO()
+    }
+
+    @PostMapping("/{id}/settle")
+    fun settle(
+        @PathVariable("id") fromWaterPocketId: Int,
+        @RequestBody paymentRequest: PaymentRequestDTO
+    ): WaterPocketDTO {
+        return waterPocketService.settle(fromWaterPocketId, paymentRequest).toDTO()
     }
 
     @GetMapping("/{id}/debt", consumes = [MediaType.ALL_VALUE])
