@@ -49,23 +49,31 @@ class WaterPocketController(
 
     @PostMapping("/{id}/borrow")
     fun borrow(
-        @PathVariable("id") toWaterPocketId: Int,
+        @PathVariable("id") debtorId: Int,
         @RequestBody loanRequest: LoanRequestDTO
     ): WaterPocketDTO {
-        return waterPocketService.loan(toWaterPocketId, loanRequest).toDTO()
+        return waterPocketService.loan(
+            debtorId = debtorId,
+            creditorId = loanRequest.from,
+            quantity = loanRequest.quantity
+        ).toDTO()
     }
 
     @PostMapping("/{id}/settle")
     fun settle(
-        @PathVariable("id") fromWaterPocketId: Int,
+        @PathVariable("id") debtorId: Int,
         @RequestBody paymentRequest: PaymentRequestDTO
     ): WaterPocketDTO {
-        return waterPocketService.settle(fromWaterPocketId, paymentRequest).toDTO()
+        return waterPocketService.settle(
+            debtorId = debtorId,
+            creditorId = paymentRequest.to,
+            quantity = paymentRequest.quantity
+        ).toDTO()
     }
 
     @GetMapping("/{id}/debt", consumes = [MediaType.ALL_VALUE])
     fun debt(@PathVariable("id") id: Int): DebitListDTO {
-        return waterPocketService.findAllLoansTo(id).toDTO()
+        return waterPocketService.findAllDebts(id).toDTO()
     }
 }
 

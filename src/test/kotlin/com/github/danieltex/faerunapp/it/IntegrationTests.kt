@@ -2,6 +2,7 @@ package com.github.danieltex.faerunapp.it
 
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
 import org.assertj.core.api.Assertions.assertThat
@@ -91,13 +92,13 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
 
     @Test
     fun `Assert when borrows invalid amount returns bad request status`() {
-        val fromWP = WaterPocketDTO("From", "10.00".toBigDecimal())
-        val toWP = WaterPocketDTO("To", "0.00".toBigDecimal())
+        val creditor = WaterPocketDTO("From", "10.00".toBigDecimal())
+        val debtor = WaterPocketDTO("To", "0.00".toBigDecimal())
 
-        val fromResponse = restTemplate.postForEntity("/water-pockets", fromWP, WaterPocketDTO::class.java).body!!
-        val toResponse = restTemplate.postForEntity("/water-pockets", toWP, WaterPocketDTO::class.java).body!!
-        val borrowRequest = LoanRequestDTO(fromResponse.id!!, "20.00".toBigDecimal())
-        val result = restTemplate.postForEntity("/water-pockets/${toResponse.id}/borrow", borrowRequest, String::class.java)
+        val creditorResponse = restTemplate.postForEntity("/water-pockets", creditor, WaterPocketDTO::class.java).body!!
+        val debtorResponse = restTemplate.postForEntity("/water-pockets", debtor, WaterPocketDTO::class.java).body!!
+        val borrowRequest = LoanRequestDTO(creditorResponse.id!!, "20.00".toBigDecimal())
+        val result = restTemplate.postForEntity("/water-pockets/${debtorResponse.id}/borrow", borrowRequest, String::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, result.statusCode)
         assertEquals("Insufficient storage on water pocket", result.body)
@@ -105,16 +106,16 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
 
     @Test
     fun `Assert when borrows valid amount returns updated storage`() {
-        val fromWP = WaterPocketDTO("FromWp", "50.00".toBigDecimal())
-        val toWP = WaterPocketDTO("ToWp", "10.00".toBigDecimal())
+        val creditor = WaterPocketDTO("FromWp", "50.00".toBigDecimal())
+        val debtor = WaterPocketDTO("ToWp", "10.00".toBigDecimal())
 
-        val idFrom = restTemplate.postForEntity("/water-pockets", fromWP, WaterPocketDTO::class.java).body!!.id!!
-        val idTo = restTemplate.postForEntity("/water-pockets", toWP, WaterPocketDTO::class.java).body!!.id!!
-        val borrowRequest = LoanRequestDTO(idFrom, "30.00".toBigDecimal())
-        val result = restTemplate.postForEntity("/water-pockets/${idTo}/borrow", borrowRequest, WaterPocketDTO::class.java)
+        val creditorId = restTemplate.postForEntity("/water-pockets", creditor, WaterPocketDTO::class.java).body!!.id!!
+        val debtorId = restTemplate.postForEntity("/water-pockets", debtor, WaterPocketDTO::class.java).body!!.id!!
+        val loanRequest = LoanRequestDTO(creditorId, "30.00".toBigDecimal())
+        val result = restTemplate.postForEntity("/water-pockets/${debtorId}/borrow", loanRequest, WaterPocketDTO::class.java)
 
         assertEquals(HttpStatus.OK, result.statusCode)
-        assertEquals(idTo, result.body!!.id!!)
+        assertEquals(debtorId, result.body!!.id!!)
         assertEquals(40.0, result.body!!.storage.toDouble())
     }
 
@@ -130,12 +131,12 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
 
         // make gamma borrow from alpha and beta
         // make alpha borrow from gamma
-        val borrowAlpha = LoanRequestDTO(idAlpha, "10.00".toBigDecimal())
-        val borrowBeta = LoanRequestDTO(idBeta, "20.00".toBigDecimal())
-        val borrowGamma = LoanRequestDTO(idGamma, "30.00".toBigDecimal())
-        restTemplate.postForEntity("/water-pockets/${idGamma}/borrow", borrowAlpha, WaterPocketDTO::class.java)
-        restTemplate.postForEntity("/water-pockets/${idGamma}/borrow", borrowBeta, WaterPocketDTO::class.java)
-        restTemplate.postForEntity("/water-pockets/${idAlpha}/borrow", borrowGamma, WaterPocketDTO::class.java)
+        val loanAlpha = LoanRequestDTO(idAlpha, "10.00".toBigDecimal())
+        val loanBeta = LoanRequestDTO(idBeta, "20.00".toBigDecimal())
+        val loanGamma = LoanRequestDTO(idGamma, "30.00".toBigDecimal())
+        restTemplate.postForEntity("/water-pockets/${idGamma}/borrow", loanAlpha, WaterPocketDTO::class.java)
+        restTemplate.postForEntity("/water-pockets/${idGamma}/borrow", loanBeta, WaterPocketDTO::class.java)
+        restTemplate.postForEntity("/water-pockets/${idAlpha}/borrow", loanGamma, WaterPocketDTO::class.java)
         val responseAlpha = restTemplate.getForEntity("/water-pockets/${idAlpha}/debt", DebitListDTO::class.java)
         val responseBeta = restTemplate.getForEntity("/water-pockets/${idBeta}/debt", DebitListDTO::class.java)
         val responseGamma = restTemplate.getForEntity("/water-pockets/${idGamma}/debt", DebitListDTO::class.java)
@@ -159,5 +160,25 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         assertEquals(2, debtsGamma.size)
         assertEquals(10.0, debtsGamma.find { it.id == idAlpha }!!.quantity.toDouble())
         assertEquals(20.0, debtsGamma.find { it.id == idBeta }!!.quantity.toDouble())
+    }
+
+    @Test
+    fun `Assert when pays valid amount returns updated storage`() {
+        val debtor = WaterPocketDTO("Debtor", "10.00".toBigDecimal())
+        val creditor = WaterPocketDTO("Creditor", "40.00".toBigDecimal())
+
+        val debtorId = restTemplate.postForEntity("/water-pockets", debtor, WaterPocketDTO::class.java).body!!.id!!
+        val creditorId = restTemplate.postForEntity("/water-pockets", creditor, WaterPocketDTO::class.java)
+            .body!!.id!!
+
+        val loanRequest = LoanRequestDTO(creditorId, "30.00".toBigDecimal())
+        restTemplate.postForEntity("/water-pockets/${debtorId}/borrow", loanRequest, WaterPocketDTO::class.java)
+
+        val paymentRequest = PaymentRequestDTO(creditorId, "30.00".toBigDecimal())
+        val result = restTemplate.postForEntity("/water-pockets/${debtorId}/settle", paymentRequest, WaterPocketDTO::class.java)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertEquals(debtorId, result.body!!.id!!)
+        assertEquals(10.0, result.body!!.storage.toDouble())
     }
 }

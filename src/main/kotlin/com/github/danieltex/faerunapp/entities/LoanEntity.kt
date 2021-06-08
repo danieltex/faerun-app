@@ -2,7 +2,12 @@ package com.github.danieltex.faerunapp.entities
 
 import java.io.Serializable
 import java.math.BigDecimal
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Embeddable
+import javax.persistence.EmbeddedId
+import javax.persistence.Entity
+import javax.persistence.ManyToOne
+import javax.persistence.Table
 import javax.validation.constraints.Digits
 
 @Entity
@@ -32,23 +37,23 @@ class LoanEntity(
 @Embeddable
 class LoanEntityId(
     @ManyToOne
-    var from: WaterPocketEntity,
+    var creditor: WaterPocketEntity,
     @ManyToOne
-    var to: WaterPocketEntity
+    var debtor: WaterPocketEntity
 ) : Serializable {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LoanEntityId) return false
 
-        if (from != other.from) return false
-        if (to != other.to) return false
+        if (creditor != other.creditor) return false
+        if (debtor != other.debtor) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = from.hashCode()
-        result = 31 * result + to.hashCode()
+        var result = creditor.hashCode()
+        result = 31 * result + debtor.hashCode()
         return result
     }
 }

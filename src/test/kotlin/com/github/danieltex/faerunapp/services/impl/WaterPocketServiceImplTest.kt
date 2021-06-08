@@ -1,7 +1,5 @@
 package com.github.danieltex.faerunapp.services.impl
 
-import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
-import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.LoanEntityId
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
@@ -18,6 +16,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.math.BigDecimal
 import java.util.*
 
 class WaterPocketServiceImplTest {
@@ -39,10 +38,10 @@ class WaterPocketServiceImplTest {
         ))
 
         val toException = assertThrows<WaterPocketNotFoundException> {
-            waterPocketService.loan(existingId, loanRequestDTO(nonExistingId456))
+            waterPocketService.loan(existingId, nonExistingId456, BigDecimal.TEN)
         }
         val fromException = assertThrows<WaterPocketNotFoundException> {
-            waterPocketService.loan(nonExistingId789, loanRequestDTO(existingId))
+            waterPocketService.loan(nonExistingId789, existingId, BigDecimal.TEN)
         }
 
         assertEquals("Water Pocket '456' not found", toException.message)
@@ -61,7 +60,7 @@ class WaterPocketServiceImplTest {
         ))
 
         val exception = assertThrows<InsufficientQuantityException> {
-            waterPocketService.loan(debtor, loanRequestDTO(creditor, "200"))
+            waterPocketService.loan(debtor, creditor, "200".toBigDecimal())
         }
         assertEquals("Insufficient storage on water pocket", exception.message)
     }
@@ -80,7 +79,7 @@ class WaterPocketServiceImplTest {
         )
 
         // act
-        val debtorResult = waterPocketService.loan(debtorId, loanRequestDTO(creditorId, "100"))
+        val debtorResult = waterPocketService.loan(debtorId, creditorId, "100".toBigDecimal())
 
         // verify result
         assertEquals(100.0, debtorResult.storage.toDouble())
@@ -110,10 +109,10 @@ class WaterPocketServiceImplTest {
         ))
 
         val toException = assertThrows<WaterPocketNotFoundException> {
-            waterPocketService.settle(existingId, paymentRequestDto(nonExistingId456))
+            waterPocketService.settle(existingId, nonExistingId456, BigDecimal.TEN)
         }
         val fromException = assertThrows<WaterPocketNotFoundException> {
-            waterPocketService.settle(nonExistingId789, paymentRequestDto(existingId))
+            waterPocketService.settle(nonExistingId789, existingId, BigDecimal.TEN)
         }
 
         assertEquals("Water Pocket '456' not found", toException.message)
@@ -122,89 +121,89 @@ class WaterPocketServiceImplTest {
 
     @Test
     fun `when payment quantity is bigger than storage should throw Insufficient Quantity Exception`() {
-        val receiverId = 123
-        val payerId = 456
-        val receiver = newWaterPocket(receiverId)
-        val payer = newWaterPocket(payerId, "100.00")
-        whenever(waterPocketRepository.findById(receiverId)).thenReturn(
-            Optional.of(receiver)
+        val creditorId = 123
+        val debtorId = 456
+        val creditor = newWaterPocket(creditorId)
+        val debtor = newWaterPocket(debtorId, "100.00")
+        whenever(waterPocketRepository.findById(creditorId)).thenReturn(
+            Optional.of(creditor)
         )
-        whenever(waterPocketRepository.findById(payerId)).thenReturn(
-            Optional.of(payer)
+        whenever(waterPocketRepository.findById(debtorId)).thenReturn(
+            Optional.of(debtor)
         )
 
         val exception = assertThrows<InsufficientQuantityException> {
-            waterPocketService.settle(payerId, paymentRequestDto(receiverId, "200"))
+            waterPocketService.settle(debtorId, creditorId, "200".toBigDecimal())
         }
         assertEquals("Insufficient storage on water pocket", exception.message)
     }
 
     @Test
     fun `when payment quantity is bigger than debt should throw Insufficient Quantity Exception`() {
-        val receiverId = 123
-        val payerId = 456
-        val receiver = newWaterPocket(receiverId)
-        val payer = newWaterPocket(payerId, "300.00")
-        val loanId = LoanEntityId(payer, receiver)
+        val creditorId = 123
+        val debtorId = 456
+        val creditor = newWaterPocket(creditorId)
+        val debtor = newWaterPocket(debtorId, "300.00")
+        val loanId = LoanEntityId(creditor = creditor, debtor = debtor)
         val loan = LoanEntity(loanId, "150.00".toBigDecimal())
-        whenever(waterPocketRepository.findById(receiverId)).thenReturn(
-            Optional.of(receiver)
+        whenever(waterPocketRepository.findById(creditorId)).thenReturn(
+            Optional.of(creditor)
         )
-        whenever(waterPocketRepository.findById(payerId)).thenReturn(
-            Optional.of(payer)
+        whenever(waterPocketRepository.findById(debtorId)).thenReturn(
+            Optional.of(debtor)
         )
         whenever(loanRepository.findById(loanId)).thenReturn(
             Optional.of(loan)
         )
 
         val exception = assertThrows<InsufficientQuantityException> {
-            waterPocketService.settle(payerId, paymentRequestDto(receiverId, "200.00"))
+            waterPocketService.settle(debtorId, creditorId, "200.00".toBigDecimal())
         }
         assertEquals("Payment is bigger than debt", exception.message)
     }
 
     @Test
     fun `when payment and no loan found should throw Insufficient Quantity Exception`() {
-        val receiverId = 123
-        val payerId = 456
-        val receiver = newWaterPocket(receiverId)
-        val payer = newWaterPocket(payerId, "300.00")
-        whenever(waterPocketRepository.findById(receiverId)).thenReturn(
-            Optional.of(receiver)
+        val creditorId = 123
+        val debtorId = 456
+        val creditor = newWaterPocket(creditorId)
+        val debtor = newWaterPocket(debtorId, "300.00")
+        whenever(waterPocketRepository.findById(creditorId)).thenReturn(
+            Optional.of(creditor)
         )
-        whenever(waterPocketRepository.findById(payerId)).thenReturn(
-            Optional.of(payer)
+        whenever(waterPocketRepository.findById(debtorId)).thenReturn(
+            Optional.of(debtor)
         )
 
         val exception = assertThrows<InsufficientQuantityException> {
-            waterPocketService.settle(payerId, paymentRequestDto(receiverId, "200.00"))
+            waterPocketService.settle(debtorId, creditorId, "200.00".toBigDecimal())
         }
         assertEquals("Payment is bigger than debt", exception.message)
     }
 
     @Test
     fun `when valid payment should return updated storage and save loan and water pocket storages`() {
-        val receiverId = 123
-        val payerId = 456
-        val receiver = newWaterPocket(receiverId, "0.00")
-        val payer = newWaterPocket(payerId, "100.00")
-        whenever(waterPocketRepository.findById(receiverId)).thenReturn(
-            Optional.of(receiver)
+        val creditorId = 123
+        val debtorId = 456
+        val creditor = newWaterPocket(creditorId, "0.00")
+        val debtor = newWaterPocket(debtorId, "100.00")
+        whenever(waterPocketRepository.findById(creditorId)).thenReturn(
+            Optional.of(creditor)
         )
-        whenever(waterPocketRepository.findById(payerId)).thenReturn(
-            Optional.of(payer)
+        whenever(waterPocketRepository.findById(debtorId)).thenReturn(
+            Optional.of(debtor)
         )
-        val loanId = LoanEntityId(payer, receiver)
+        val loanId = LoanEntityId(creditor = creditor, debtor = debtor)
         val loan = LoanEntity(loanId, "150.00".toBigDecimal())
         whenever(loanRepository.findById(loanId))
             .thenReturn(Optional.of(loan))
 
         // act
-        val payerResult = waterPocketService.settle(payerId, paymentRequestDto(receiverId, "100"))
+        val debtorResult = waterPocketService.settle(debtorId, creditorId, "100".toBigDecimal())
 
         // verify result
-        assertEquals(0.0, payerResult.storage.toDouble())
-        assertEquals(payerId, payerResult.id)
+        assertEquals(0.0, debtorResult.storage.toDouble())
+        assertEquals(debtorId, debtorResult.id)
 
         // verify updated loan value
         val loanCaptor = argumentCaptor<LoanEntity>()
@@ -214,31 +213,31 @@ class WaterPocketServiceImplTest {
         // verify saved updated storage values
         val wpCaptor = argumentCaptor<WaterPocketEntity>()
         verify(waterPocketRepository, times(2)).save(wpCaptor.capture())
-        val savedReceiver = wpCaptor.allValues.find { it.id == receiverId }!!
-        val savedPayer = wpCaptor.allValues.find { it.id == payerId }!!
-        assertEquals(100.0, savedReceiver.storage.toDouble())
-        assertEquals(0.0, savedPayer.storage.toDouble())
+        val savedCreditor = wpCaptor.allValues.find { it.id == creditorId }!!
+        val savedDebtor = wpCaptor.allValues.find { it.id == debtorId }!!
+        assertEquals(100.0, savedCreditor.storage.toDouble())
+        assertEquals(0.0, savedDebtor.storage.toDouble())
     }
 
     @Test
     fun `when full payment should return remove loan`() {
-        val receiverId = 123
-        val payerId = 456
-        val receiver = newWaterPocket(receiverId, "0.00")
-        val payer = newWaterPocket(payerId, "100.00")
-        whenever(waterPocketRepository.findById(receiverId)).thenReturn(
-            Optional.of(receiver)
+        val creditorId = 123
+        val debtorId = 456
+        val creditor = newWaterPocket(creditorId, "0.00")
+        val debtor = newWaterPocket(debtorId, "100.00")
+        whenever(waterPocketRepository.findById(creditorId)).thenReturn(
+            Optional.of(creditor)
         )
-        whenever(waterPocketRepository.findById(payerId)).thenReturn(
-            Optional.of(payer)
+        whenever(waterPocketRepository.findById(debtorId)).thenReturn(
+            Optional.of(debtor)
         )
-        val loanId = LoanEntityId(payer, receiver)
+        val loanId = LoanEntityId(creditor = creditor, debtor = debtor)
         val loan = LoanEntity(loanId, "100.00".toBigDecimal())
         whenever(loanRepository.findById(loanId))
             .thenReturn(Optional.of(loan))
 
         // act
-        waterPocketService.settle(payerId, paymentRequestDto(receiverId, "100"))
+        waterPocketService.settle(debtorId = debtorId, creditorId = creditorId, quantity = "100".toBigDecimal())
 
         // verify remove loan
         val loanCaptor = argumentCaptor<LoanEntity>()
@@ -250,7 +249,7 @@ class WaterPocketServiceImplTest {
         val id = 123
 
         val exception = assertThrows<SelfOperationException> {
-            waterPocketService.loan(id, loanRequestDTO(id))
+            waterPocketService.loan(id, id, BigDecimal.TEN)
         }
         assertEquals("Cannot make operation to itself", exception.message)
     }
@@ -260,24 +259,15 @@ class WaterPocketServiceImplTest {
         val id = 123
 
         val exception = assertThrows<SelfOperationException> {
-            waterPocketService.settle(id, paymentRequestDto(id))
+            waterPocketService.settle(id, id, BigDecimal.TEN)
         }
 
         assertEquals("Cannot make operation to itself", exception.message)
     }
-
-    private fun loanRequestDTO(
-        fromId: Int,
-        quantity: String = "10"
-    ) = LoanRequestDTO(from = fromId, quantity = quantity.toBigDecimal())
 
     private fun newWaterPocket(
         id: Int,
         storage: String = "10"
     ) = WaterPocketEntity(name = "water-pocket", storage = storage.toBigDecimal(), id = id)
 
-    private fun paymentRequestDto(
-        toId: Int,
-        quantity: String = "10"
-    ) = PaymentRequestDTO(to = toId, quantity = quantity.toBigDecimal())
 }

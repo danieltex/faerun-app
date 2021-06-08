@@ -1,7 +1,5 @@
 package com.github.danieltex.faerunapp.services.impl
 
-import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
-import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.LoanEntityId
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
@@ -16,6 +14,7 @@ import com.github.danieltex.faerunapp.services.WaterPocketService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Service
 class WaterPocketServiceImpl(
@@ -31,66 +30,71 @@ class WaterPocketServiceImpl(
 
     @Transactional
     override fun loan(
-        toWaterPocketId: Int,
-        loanRequest: LoanRequestDTO
+        debtorId: Int,
+        creditorId: Int,
+        quantity: BigDecimal
     ): WaterPocketEntity {
-        if (toWaterPocketId == loanRequest.from) throw SelfOperationException()
-        logger.info("New loan from '{}' to '{}'", loanRequest.from, toWaterPocketId)
-        val to = findById(toWaterPocketId)
-        val from = findById(loanRequest.from)
-        if (from.storage < loanRequest.quantity) throw InsufficientQuantityException(INSUFFICIENT_STORAGE_MESSAGE)
+        if (debtorId == creditorId) throw SelfOperationException()
+        logger.info("New loan from creditor '{}' to  debtor '{}'", creditorId, debtorId)
+        val debtor = findById(debtorId)
+        val creditor = findById(creditorId)
+        if (creditor.storage < quantity) throw InsufficientQuantityException(INSUFFICIENT_STORAGE_MESSAGE)
 
         // add to or create loan
-        val loanId = LoanEntityId(from, to)
+        val loanId = LoanEntityId(creditor = creditor, debtor = debtor)
         val loan = loanRepository
             .findById(loanId)
             .orElse(LoanEntity(loanId, "0.00".toBigDecimal()))
-        loan.quantity += loanRequest.quantity
+        loan.quantity += quantity
         loanRepository.save(loan)
 
         // update water pockets storage
-        from.storage -= loanRequest.quantity
-        to.storage += loanRequest.quantity
-        waterPocketRepository.save(from)
-        waterPocketRepository.save(to)
+        creditor.storage -= quantity
+        debtor.storage += quantity
+        waterPocketRepository.save(creditor)
+        waterPocketRepository.save(debtor)
 
-        return to
+        return debtor
     }
 
-    override fun findAllLoansTo(id: Int): List<LoanEntity> {
-        return loanRepository.findByIdToId(id)
+    override fun findAllDebts(id: Int): List<LoanEntity> {
+        return loanRepository.findByIdDebtorId(id)
     }
 
     @Transactional
-    override fun settle(fromWaterPocketId: Int, paymentRequest: PaymentRequestDTO): WaterPocketEntity {
-        if (fromWaterPocketId == paymentRequest.to) throw SelfOperationException()
-        logger.info("New payment from '{}' to '{}'", fromWaterPocketId, paymentRequest.to)
-        val to = findById(paymentRequest.to)
-        val from = findById(fromWaterPocketId)
-        if (from.storage < paymentRequest.quantity) throw InsufficientQuantityException(INSUFFICIENT_STORAGE_MESSAGE)
+    override fun settle(
+        debtorId: Int,
+        creditorId: Int,
+        quantity: BigDecimal
+    ): WaterPocketEntity {
+        if (creditorId == debtorId) throw SelfOperationException()
+        logger.info("New payment from debtor '{}' to creditor '{}'", debtorId, creditorId)
+        val creditor = findById(creditorId)
+        val debtor = findById(debtorId)
+        if (debtor.storage < quantity) throw InsufficientQuantityException(INSUFFICIENT_STORAGE_MESSAGE)
 
         // throw exception if payment is bigger than debt or no loan found
-        val loanId = LoanEntityId(from, to)
+        val loanId = LoanEntityId(creditor = creditor, debtor = debtor)
         val loan = loanRepository
             .findById(loanId)
             .orElseThrow { InsufficientQuantityException(OVERPAYMENT_MESSAGE) }
-        if (loan.quantity < paymentRequest.quantity) throw InsufficientQuantityException(OVERPAYMENT_MESSAGE)
+        if (loan.quantity < quantity) throw InsufficientQuantityException(OVERPAYMENT_MESSAGE)
 
         // remove loan if fully payed
-        if (loan.quantity.compareTo(paymentRequest.quantity) == 0) {
+        if (loan.quantity.compareTo(quantity) == 0) {
             loanRepository.delete(loan)
         } else {
-            loan.quantity -= paymentRequest.quantity
+            loan.quantity -= quantity
             loanRepository.save(loan)
         }
 
         // update water pockets storage
-        from.storage -= paymentRequest.quantity
-        to.storage += paymentRequest.quantity
-        waterPocketRepository.save(from)
-        waterPocketRepository.save(to)
+        creditor.storage += quantity
+        debtor.storage -= quantity
+        waterPocketRepository.save(creditor)
+        waterPocketRepository.save(debtor)
 
-        return from
+        return debtor
     }
 
     override fun findById(id: Int): WaterPocketEntity = waterPocketRepository

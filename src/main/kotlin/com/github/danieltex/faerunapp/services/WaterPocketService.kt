@@ -1,15 +1,14 @@
 package com.github.danieltex.faerunapp.services
 
-import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
-import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
+import java.math.BigDecimal
 
 interface WaterPocketService {
     fun save(waterPocket: WaterPocketEntity): WaterPocketEntity
-    fun findById(id: Int): WaterPocketEntity
+    fun loan(debtorId: Int, creditorId: Int, quantity: BigDecimal): WaterPocketEntity
+    fun settle(debtorId: Int, creditorId: Int, quantity: BigDecimal): WaterPocketEntity
     fun findAll(): List<WaterPocketEntity>
-    fun loan(toWaterPocketId: Int, loanRequest: LoanRequestDTO): WaterPocketEntity
-    fun findAllLoansTo(id: Int): List<LoanEntity>
-    fun settle(fromWaterPocketId: Int, paymentRequest: PaymentRequestDTO): WaterPocketEntity
+    fun findAllDebts(id: Int): List<LoanEntity>
+    fun findById(id: Int): WaterPocketEntity
 }
