@@ -53,4 +53,10 @@ class WaterPocketController(
     ): WaterPocketDTO {
         return waterPocketService.loan(toWaterPocketId, loanRequest).toDTO()
     }
+
+    @GetMapping("/{id}/debt", consumes = [MediaType.ALL_VALUE])
+    fun debt(@PathVariable("id") id: Int): DebitListDTO {
+        return waterPocketService.findAllLoansTo(id).toDTO()
+    }
 }
+

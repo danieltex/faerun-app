@@ -1,5 +1,6 @@
 package com.github.danieltex.faerunapp.it
 
+import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
@@ -103,7 +104,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     }
 
     @Test
-    fun `Assert borrow valid amount returns updated storage`() {
+    fun `Assert when borrows valid amount returns updated storage`() {
         val fromWP = WaterPocketDTO("FromWp", "50.00".toBigDecimal())
         val toWP = WaterPocketDTO("ToWp", "10.00".toBigDecimal())
 
@@ -115,5 +116,48 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals(idTo, result.body!!.id!!)
         assertEquals(40.0, result.body!!.storage.toDouble())
+    }
+
+    @Test
+    fun `Assert can retrieve debts contracted`() {
+        // create 3 water pockets
+        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = WaterPocketDTO("Beta", "100.00".toBigDecimal())
+        val gamma = WaterPocketDTO("Gamma", "100.00".toBigDecimal())
+        val idAlpha = restTemplate.postForEntity("/water-pockets", alpha, WaterPocketDTO::class.java).body!!.id!!
+        val idBeta = restTemplate.postForEntity("/water-pockets", beta, WaterPocketDTO::class.java).body!!.id!!
+        val idGamma = restTemplate.postForEntity("/water-pockets", gamma, WaterPocketDTO::class.java).body!!.id!!
+
+        // make gamma borrow from alpha and beta
+        // make alpha borrow from gamma
+        val borrowAlpha = LoanRequestDTO(idAlpha, "10.00".toBigDecimal())
+        val borrowBeta = LoanRequestDTO(idBeta, "20.00".toBigDecimal())
+        val borrowGamma = LoanRequestDTO(idGamma, "30.00".toBigDecimal())
+        restTemplate.postForEntity("/water-pockets/${idGamma}/borrow", borrowAlpha, WaterPocketDTO::class.java)
+        restTemplate.postForEntity("/water-pockets/${idGamma}/borrow", borrowBeta, WaterPocketDTO::class.java)
+        restTemplate.postForEntity("/water-pockets/${idAlpha}/borrow", borrowGamma, WaterPocketDTO::class.java)
+        val responseAlpha = restTemplate.getForEntity("/water-pockets/${idAlpha}/debt", DebitListDTO::class.java)
+        val responseBeta = restTemplate.getForEntity("/water-pockets/${idBeta}/debt", DebitListDTO::class.java)
+        val responseGamma = restTemplate.getForEntity("/water-pockets/${idGamma}/debt", DebitListDTO::class.java)
+
+        // returns ok even if no debt
+        assertEquals(HttpStatus.OK, responseAlpha.statusCode)
+        assertEquals(HttpStatus.OK, responseBeta.statusCode)
+        assertEquals(HttpStatus.OK, responseGamma.statusCode)
+
+        // assert alpha has debt to gamma
+        val debtsAlpha = responseAlpha.body!!.debts
+        assertEquals(1, debtsAlpha.size)
+        assertEquals(30.0, debtsAlpha.find { it.id == idGamma }!!.quantity.toDouble())
+
+        // assert beta has no debts
+        val debtsBeta = responseBeta.body!!.debts
+        assertEquals(0, debtsBeta.size)
+
+        // assert gamma has debts to alpha and gamma
+        val debtsGamma = responseGamma.body!!.debts
+        assertEquals(2, debtsGamma.size)
+        assertEquals(10.0, debtsGamma.find { it.id == idAlpha }!!.quantity.toDouble())
+        assertEquals(20.0, debtsGamma.find { it.id == idBeta }!!.quantity.toDouble())
     }
 }

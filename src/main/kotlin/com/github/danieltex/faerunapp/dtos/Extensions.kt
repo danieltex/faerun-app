@@ -7,6 +7,6 @@ fun WaterPocketEntity.toDTO(): WaterPocketDTO = WaterPocketDTO(name = name, stor
 
 fun WaterPocketDTO.toEntity(): WaterPocketEntity = WaterPocketEntity(name = name, storage = storage, id = id)
 
-fun Collection<LoanEntity>.toDTO(): DebitListDTO = DebitListDTO(debits = this.map(LoanEntity::toDTO))
+fun Collection<LoanEntity>.toDTO(): DebitListDTO = DebitListDTO(debts = this.map(LoanEntity::toDTO))
 
-fun LoanEntity.toDTO(): DebitDTO = DebitDTO(id = id.to.id!!, quantity = quantity)
+fun LoanEntity.toDTO(): DebitDTO = DebitDTO(id = id.from.id!!, quantity = quantity)

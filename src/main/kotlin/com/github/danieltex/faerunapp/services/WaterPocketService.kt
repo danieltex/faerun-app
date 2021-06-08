@@ -9,4 +9,5 @@ interface WaterPocketService {
     fun findById(id: Int): WaterPocketEntity
     fun findAll(): List<WaterPocketEntity>
     fun loan(toWaterPocketId: Int, loanRequest: LoanRequestDTO): WaterPocketEntity
+    fun findAllLoansTo(id: Int): List<LoanEntity>
 }

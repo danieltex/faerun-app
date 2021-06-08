@@ -1,9 +1,9 @@
-package com.github.danieltex.faerunapp.dto
+package com.github.danieltex.faerunapp.dtos
 
 import java.math.BigDecimal
 
 data class DebitListDTO(
-    val debits: List<DebitDTO>
+    val debts: List<DebitDTO>
 )
 
 data class DebitDTO(

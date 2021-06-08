@@ -53,6 +53,10 @@ class WaterPocketServiceImpl(
         return to
     }
 
+    override fun findAllLoansTo(id: Int): List<LoanEntity> {
+        return loanRepository.findByIdToId(id)
+    }
+
     override fun findById(id: Int): WaterPocketEntity = waterPocketRepository
         .findById(id)
         .orElseThrow { WaterPocketNotFoundException(id) }

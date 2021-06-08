@@ -6,7 +6,13 @@ import org.springframework.data.repository.PagingAndSortingRepository
 
 interface LoanRepository : PagingAndSortingRepository<LoanEntity, LoanEntityId> {
 
-    fun findByIdFrom(fromId: Int): List<LoanEntity>
+    /**
+     * Return all loans made FROM a given water pocket
+     */
+    fun findByIdFromId(fromId: Int): List<LoanEntity>
 
-    fun findByIdTo(toId: Int): List<LoanEntity>
+    /**
+     * Return all loans made TO a given water pocket
+     */
+    fun findByIdToId(toId: Int): List<LoanEntity>
 }
