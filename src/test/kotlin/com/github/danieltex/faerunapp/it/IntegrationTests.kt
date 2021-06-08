@@ -32,7 +32,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     }
 
     @Test
-    fun `Assert create water pocket wont accept empty or null fields`() {
+    fun `Assert result bad request on invalid json`() {
         val noNameWatterPocket = """
             {
                 "storage": 700.8
