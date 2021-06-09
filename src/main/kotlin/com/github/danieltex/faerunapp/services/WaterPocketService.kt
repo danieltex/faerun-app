@@ -1,5 +1,6 @@
 package com.github.danieltex.faerunapp.services
 
+import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
 import java.math.BigDecimal
@@ -11,4 +12,5 @@ interface WaterPocketService {
     fun findAll(): List<WaterPocketEntity>
     fun findAllDebts(id: Int): List<LoanEntity>
     fun findById(id: Int): WaterPocketEntity
+    fun getOptimizedBalance(): BalanceDTO
 }

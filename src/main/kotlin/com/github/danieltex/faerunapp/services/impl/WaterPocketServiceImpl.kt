@@ -1,5 +1,7 @@
 package com.github.danieltex.faerunapp.services.impl
 
+import com.github.danieltex.faerunapp.dtos.BalanceDTO
+import com.github.danieltex.faerunapp.dtos.buildBalanceDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.LoanEntityId
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
@@ -11,6 +13,8 @@ import com.github.danieltex.faerunapp.exceptions.WaterPocketNotFoundException
 import com.github.danieltex.faerunapp.repositories.LoanRepository
 import com.github.danieltex.faerunapp.repositories.WaterPocketRepository
 import com.github.danieltex.faerunapp.services.WaterPocketService
+import com.github.danieltex.faerunapp.services.balance.GreedyBalanceStrategy
+import com.github.danieltex.faerunapp.services.balance.Operation
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -95,6 +99,28 @@ class WaterPocketServiceImpl(
         waterPocketRepository.save(debtor)
 
         return debtor
+    }
+
+    override fun getOptimizedBalance(): BalanceDTO {
+        // retrieve all loans and optimize operations
+        val allLoans = loanRepository.findAll()
+        val optimizedOperations = GreedyBalanceStrategy(allLoans).execute()
+
+        // retrieve all water-pockets involved in the optimized operations
+        val waterPocketMap = retrieveWaterPockets(optimizedOperations)
+
+        // map operations to balance dto
+        return buildBalanceDTO(optimizedOperations, waterPocketMap)
+    }
+
+    private fun retrieveWaterPockets(optimizedOperations: List<Operation>): Map<Int, WaterPocketEntity> {
+        val waterPocketIds = optimizedOperations
+            .map { listOf(it.creditor, it.debtor) }
+            .flatten()
+            .toSet()
+        return waterPocketRepository
+            .findAllById(waterPocketIds)
+            .associateBy { it.id!! }
     }
 
     override fun findById(id: Int): WaterPocketEntity = waterPocketRepository

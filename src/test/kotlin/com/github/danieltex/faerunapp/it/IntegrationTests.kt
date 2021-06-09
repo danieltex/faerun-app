@@ -1,5 +1,6 @@
 package com.github.danieltex.faerunapp.it
 
+import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
@@ -180,5 +181,11 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals(debtorId, result.body!!.id!!)
         assertEquals(10.0, result.body!!.storage.toDouble())
+    }
+
+    @Test
+    fun `assert can generate valid balance`() {
+        val response = restTemplate.getForEntity("/water-pockets/balance", BalanceDTO::class.java)
+        assertEquals(HttpStatus.OK, response.statusCode)
     }
 }

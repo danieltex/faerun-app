@@ -1,5 +1,6 @@
 package com.github.danieltex.faerunapp.controllers
 
+import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
@@ -74,6 +75,11 @@ class WaterPocketController(
     @GetMapping("/{id}/debt", consumes = [MediaType.ALL_VALUE])
     fun debt(@PathVariable("id") id: Int): DebitListDTO {
         return waterPocketService.findAllDebts(id).toDTO()
+    }
+
+    @GetMapping("/balance", consumes = [MediaType.ALL_VALUE])
+    fun balance(): BalanceDTO {
+        return waterPocketService.getOptimizedBalance()
     }
 }
 
