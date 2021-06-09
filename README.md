@@ -71,8 +71,19 @@ To get a local copy up and running follow these simple steps.
 <!-- USAGE EXAMPLES -->
 ## Usage
 
+1. Building the source
+   `./gradlew clean build`
 
+2. Running
+   Start MySQL (with docker for e.g.):
+   
+   `docker run -d --name faerundb --rm -e "MYSQL_ROOT_PASSWORD=secretpassword" -e "MYSQL_DATABASE=faerun" -p 3306:3306  mysql`
 
+   Then start the application through gradle:
+   
+   `./gradlew bootRun`
+<!--   `./gradlew bootRun --args='--spring.profiles.active=local'` -->
+   
 <!-- CONTACT -->
 ## Contact
 

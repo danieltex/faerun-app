@@ -1,6 +1,10 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
-    driverClassName: org.h2.Driver
-  jpa.database-platform: org.hibernate.dialect.H2Dialect
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/faerun
+    driver-class-name: com.mysql.jdbc.Driver
+    username: ${JDBC_USER:root}
+    password: ${JDBC_PASSWORD:secretpassword}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate.ddl-auto: update
 server.error.include-stacktrace: never
