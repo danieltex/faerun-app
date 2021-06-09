@@ -3,12 +3,13 @@ package com.github.danieltex.faerunapp.it
 import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.OperationDetails
+import com.github.danieltex.faerunapp.dtos.OperationType
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -185,7 +186,70 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
 
     @Test
     fun `assert can generate valid balance`() {
+        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = WaterPocketDTO("Beta", "400.00".toBigDecimal())
+        val gamma = WaterPocketDTO("Gamma", "1000.00".toBigDecimal())
+        val delta = WaterPocketDTO("Delta", "0.00".toBigDecimal())
+
+        val alphaId = restTemplate.postForEntity("/water-pockets", alpha, WaterPocketDTO::class.java).body!!.id!!
+        val betaId = restTemplate.postForEntity("/water-pockets", beta, WaterPocketDTO::class.java).body!!.id!!
+        val gammaId = restTemplate.postForEntity("/water-pockets", gamma, WaterPocketDTO::class.java).body!!.id!!
+        val deltaId = restTemplate.postForEntity("/water-pockets", delta, WaterPocketDTO::class.java).body!!.id!!
+
+        // borrows:
+        // alpha -> beta  : 400
+        // beta  -> gamma : 10
+        // delta -> gamma : 900
+
+        // alpha should pay 400
+        // delta should pay 900
+        // beta should receive 390
+        // gamma should receive 910
+        val loanAlphaBeta = LoanRequestDTO(betaId, "400.00".toBigDecimal())
+        val loanBetaGamma = LoanRequestDTO(gammaId, "10.00".toBigDecimal())
+        val loanDeltaGamma = LoanRequestDTO(gammaId, "900.00".toBigDecimal())
+        restTemplate.postForEntity("/water-pockets/${alphaId}/borrow", loanAlphaBeta, WaterPocketDTO::class.java)
+        restTemplate.postForEntity("/water-pockets/${betaId}/borrow", loanBetaGamma, WaterPocketDTO::class.java)
+        restTemplate.postForEntity("/water-pockets/${deltaId}/borrow", loanDeltaGamma, WaterPocketDTO::class.java)
+
         val response = restTemplate.getForEntity("/water-pockets/balance", BalanceDTO::class.java)
         assertEquals(HttpStatus.OK, response.statusCode)
+
+        val alphaBalance = response.body!!.balance[alphaId]!!
+        val betaBalance = response.body!!.balance[betaId]!!
+        val gammaBalance = response.body!!.balance[gammaId]!!
+        val deltaBalance = response.body!!.balance[deltaId]!!
+
+        // assert correct storage on balance response
+        assertEquals(500.0, alphaBalance.storage.toDouble())
+        assertEquals(10.0, betaBalance.storage.toDouble())
+        assertEquals(90.0, gammaBalance.storage.toDouble())
+        assertEquals(900.0, deltaBalance.storage.toDouble())
+
+        val alphaOperations = alphaBalance.operations.groupBy { it.operation }
+        val betaOperations = betaBalance.operations.groupBy { it.operation }
+        val gammaOperations = gammaBalance.operations.groupBy { it.operation }
+        val deltaOperations = deltaBalance.operations.groupBy { it.operation }
+
+        // should either receive or pay (no transitive operations)
+        assertNull(alphaOperations[OperationType.RECEIVE])
+        assertNull(betaOperations[OperationType.PAY])
+        assertNull(gammaOperations[OperationType.PAY])
+        assertNull(deltaOperations[OperationType.RECEIVE])
+        assertNotNull(alphaOperations[OperationType.PAY])
+        assertNotNull(betaOperations[OperationType.RECEIVE])
+        assertNotNull(gammaOperations[OperationType.RECEIVE])
+        assertNotNull(deltaOperations[OperationType.PAY])
+
+        val alphaPayTotal = alphaOperations[OperationType.PAY]!!.sumToDouble()
+        val betaReceiveTotal = betaOperations[OperationType.RECEIVE]!!.sumToDouble()
+        val gammaReceiveTotal = gammaOperations[OperationType.RECEIVE]!!.sumToDouble()
+        val deltaPayTotal = deltaOperations[OperationType.PAY]!!.sumToDouble()
+        assertEquals(400.0, alphaPayTotal)
+        assertEquals(390.0, betaReceiveTotal)
+        assertEquals(910.0, gammaReceiveTotal)
+        assertEquals(900.0, deltaPayTotal)
     }
 }
+
+fun List<OperationDetails>.sumToDouble() = this.map { it.quantity }.reduce { a, b -> a + b }.toDouble()
