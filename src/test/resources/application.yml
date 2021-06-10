@@ -9,3 +9,8 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
     jpa.properties.hibernate.format_sql: true
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: always
