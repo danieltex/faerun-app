@@ -68,7 +68,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         val getResponse = restTemplate.getForEntity("/water-pockets/$nonExistingId", String::class.java)
 
         assertEquals(HttpStatus.NOT_FOUND, getResponse.statusCode)
-        assertEquals("Water Pocket '999' not found", getResponse.body)
+        assertThat(getResponse.body).contains("Water Pocket '999' not found")
     }
 
     @Test
@@ -103,7 +103,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         val result = restTemplate.postForEntity("/water-pockets/${debtorResponse.id}/borrow", borrowRequest, String::class.java)
 
         assertEquals(HttpStatus.BAD_REQUEST, result.statusCode)
-        assertEquals("Insufficient storage on water pocket", result.body)
+        assertThat(result.body).contains("Insufficient storage on water pocket")
     }
 
     @Test
