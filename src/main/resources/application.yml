@@ -8,6 +8,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
     hibernate.ddl-auto: update
 server:
+  port: 5000
   error:
     include-stacktrace: never
     include-message: always
