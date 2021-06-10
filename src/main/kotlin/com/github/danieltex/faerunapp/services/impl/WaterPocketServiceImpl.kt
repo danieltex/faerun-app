@@ -64,6 +64,7 @@ class WaterPocketServiceImpl(
     }
 
     override fun findAllDebts(id: Int): List<LoanEntity> {
+        findById(id)
         return loanRepository.findByIdDebtorId(id)
     }
 
