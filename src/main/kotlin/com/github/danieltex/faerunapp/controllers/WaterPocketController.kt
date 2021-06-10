@@ -4,6 +4,7 @@ import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
+import com.github.danieltex.faerunapp.dtos.SettleOperationsDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketDTO
 import com.github.danieltex.faerunapp.dtos.toDTO
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -80,6 +82,11 @@ class WaterPocketController(
     @GetMapping("/balance", consumes = [MediaType.ALL_VALUE])
     fun balance(): BalanceDTO {
         return waterPocketService.getOptimizedBalance()
+    }
+
+    @PutMapping("/settle-all", consumes = [MediaType.ALL_VALUE])
+    fun settleAll(): SettleOperationsDTO {
+        return waterPocketService.settleAll()
     }
 }
 
