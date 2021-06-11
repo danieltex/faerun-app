@@ -1,7 +1,9 @@
 package com.github.danieltex.faerunapp.services.impl
 
 import com.github.danieltex.faerunapp.dtos.BalanceDTO
+import com.github.danieltex.faerunapp.dtos.SettleOperationsDTO
 import com.github.danieltex.faerunapp.dtos.buildBalanceDTO
+import com.github.danieltex.faerunapp.dtos.buildSettleOperationsDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.LoanEntityId
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
@@ -62,6 +64,7 @@ class WaterPocketServiceImpl(
     }
 
     override fun findAllDebts(id: Int): List<LoanEntity> {
+        findById(id)
         return loanRepository.findByIdDebtorId(id)
     }
 
@@ -102,15 +105,47 @@ class WaterPocketServiceImpl(
     }
 
     override fun getOptimizedBalance(): BalanceDTO {
+        logger.info("Optimizing balance")
         // retrieve all loans and optimize operations
-        val allLoans = loanRepository.findAll()
-        val optimizedOperations = GreedyBalanceStrategy(allLoans).execute()
+        val optimizedOperations = getOptimizedOperations()
 
         // retrieve all water-pockets involved in the optimized operations
         val waterPocketMap = retrieveWaterPockets(optimizedOperations)
 
         // map operations to balance dto
         return buildBalanceDTO(optimizedOperations, waterPocketMap)
+    }
+
+    private fun getOptimizedOperations(): List<Operation> {
+        logger.info("Optimizing settle operations")
+        val allLoans = loanRepository.findAll()
+        return GreedyBalanceStrategy(allLoans).execute()
+    }
+
+    @Transactional
+    override fun settleAll(): SettleOperationsDTO {
+        logger.info("Settling all loans")
+        val optimizedOperations = getOptimizedOperations()
+        val waterPocketMap = retrieveWaterPockets(optimizedOperations)
+
+        // settle all debts and remove all loans
+        settleDebts(optimizedOperations, waterPocketMap)
+        loanRepository.deleteAll()
+        logger.info("All loans settled")
+        return buildSettleOperationsDTO(waterPocketMap, optimizedOperations)
+    }
+
+    private fun settleDebts(
+        optimizedOperations: List<Operation>,
+        waterPocketMap: Map<Int, WaterPocketEntity>
+    ) {
+        optimizedOperations.forEach {
+            val creditor = waterPocketMap.getValue(it.creditor)
+            val debtor = waterPocketMap.getValue(it.debtor)
+            creditor.storage += it.quantity
+            debtor.storage -= it.quantity
+        }
+        waterPocketRepository.saveAll(waterPocketMap.values)
     }
 
     private fun retrieveWaterPockets(optimizedOperations: List<Operation>): Map<Int, WaterPocketEntity> {

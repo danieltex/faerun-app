@@ -44,8 +44,8 @@ class WaterPocketServiceImplTest {
             waterPocketService.loan(nonExistingId789, existingId, BigDecimal.TEN)
         }
 
-        assertEquals("Water Pocket '456' not found", toException.message)
-        assertEquals("Water Pocket '789' not found", fromException.message)
+        assertEquals("Water Pocket '456' not found", toException.reason)
+        assertEquals("Water Pocket '789' not found", fromException.reason)
     }
 
     @Test
@@ -62,7 +62,7 @@ class WaterPocketServiceImplTest {
         val exception = assertThrows<InsufficientQuantityException> {
             waterPocketService.loan(debtor, creditor, "200".toBigDecimal())
         }
-        assertEquals("Insufficient storage on water pocket", exception.message)
+        assertEquals("Insufficient storage on water pocket", exception.reason)
     }
 
     @Test
@@ -115,8 +115,8 @@ class WaterPocketServiceImplTest {
             waterPocketService.settle(nonExistingId789, existingId, BigDecimal.TEN)
         }
 
-        assertEquals("Water Pocket '456' not found", toException.message)
-        assertEquals("Water Pocket '789' not found", fromException.message)
+        assertEquals("Water Pocket '456' not found", toException.reason)
+        assertEquals("Water Pocket '789' not found", fromException.reason)
     }
 
     @Test
@@ -135,7 +135,7 @@ class WaterPocketServiceImplTest {
         val exception = assertThrows<InsufficientQuantityException> {
             waterPocketService.settle(debtorId, creditorId, "200".toBigDecimal())
         }
-        assertEquals("Insufficient storage on water pocket", exception.message)
+        assertEquals("Insufficient storage on water pocket", exception.reason)
     }
 
     @Test
@@ -159,7 +159,7 @@ class WaterPocketServiceImplTest {
         val exception = assertThrows<InsufficientQuantityException> {
             waterPocketService.settle(debtorId, creditorId, "200.00".toBigDecimal())
         }
-        assertEquals("Payment is bigger than debt", exception.message)
+        assertEquals("Payment is bigger than debt", exception.reason)
     }
 
     @Test
@@ -178,7 +178,7 @@ class WaterPocketServiceImplTest {
         val exception = assertThrows<InsufficientQuantityException> {
             waterPocketService.settle(debtorId, creditorId, "200.00".toBigDecimal())
         }
-        assertEquals("Payment is bigger than debt", exception.message)
+        assertEquals("Payment is bigger than debt", exception.reason)
     }
 
     @Test
@@ -220,7 +220,7 @@ class WaterPocketServiceImplTest {
     }
 
     @Test
-    fun `when full payment should return remove loan`() {
+    fun `when full payment should remove loan`() {
         val creditorId = 123
         val debtorId = 456
         val creditor = newWaterPocket(creditorId, "0.00")
@@ -251,7 +251,7 @@ class WaterPocketServiceImplTest {
         val exception = assertThrows<SelfOperationException> {
             waterPocketService.loan(id, id, BigDecimal.TEN)
         }
-        assertEquals("Cannot make operation to itself", exception.message)
+        assertEquals("Cannot make operation to itself", exception.reason)
     }
 
     @Test
@@ -262,7 +262,18 @@ class WaterPocketServiceImplTest {
             waterPocketService.settle(id, id, BigDecimal.TEN)
         }
 
-        assertEquals("Cannot make operation to itself", exception.message)
+        assertEquals("Cannot make operation to itself", exception.reason)
+    }
+
+    @Test
+    fun `should assert water pocket exists before finding debts`() {
+        val nonExisting = 42
+
+        val exception = assertThrows<WaterPocketNotFoundException> {
+            waterPocketService.findAllDebts(nonExisting)
+        }
+
+        assertEquals("Water Pocket '42' not found", exception.reason)
     }
 
     private fun newWaterPocket(

@@ -23,22 +23,48 @@ fun buildBalanceDTO(
             val storage = waterPocketMap.getValue(id).storage
             WaterPocketBalance(storage)
         }
-        creditorBalance.operations += OperationDetails(
-            operation = OperationType.RECEIVE,
-            destinationId = operation.debtor,
-            quantity = operation.quantity
-        )
+        creditorBalance.operations += operation.toReceiveDTO()
 
         // create pay operation
         val debtorBalance = map.computeIfAbsent(operation.debtor) { id ->
             val storage = waterPocketMap.getValue(id).storage
             WaterPocketBalance(storage)
         }
-        debtorBalance.operations += OperationDetails(
-            operation = OperationType.PAY,
-            destinationId = operation.creditor,
-            quantity = operation.quantity
-        )
+        debtorBalance.operations += operation.toPayDTO()
     }
     return BalanceDTO(map)
 }
+
+fun buildSettleOperationsDTO(
+    waterPocketMap: Map<Int, WaterPocketEntity>,
+    optimizedOperations: List<Operation>
+): SettleOperationsDTO {
+    val storageMap = waterPocketMap.mapValues { (_, value) ->
+        value.storage
+    }
+
+    val payOperationDetails = optimizedOperations
+        .groupBy { it.debtor }
+        .mapValues { (_, value) ->
+            value.map { it.toPayDTO() }
+        }
+    return SettleOperationsDTO(payOperationDetails, storageMap)
+}
+
+/**
+ * Return an OperationDetails as Payment to a Creditor
+ */
+fun Operation.toPayDTO() = OperationDetails(
+    operation = OperationType.PAY,
+    destinationId = this.creditor,
+    quantity = this.quantity
+)
+
+/**
+ * Return an OperationDetails as Receipt from a Debtor
+ */
+fun Operation.toReceiveDTO() = OperationDetails(
+    operation = OperationType.RECEIVE,
+    destinationId = this.debtor,
+    quantity = this.quantity
+)
