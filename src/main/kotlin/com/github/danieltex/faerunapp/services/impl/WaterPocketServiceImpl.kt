@@ -105,6 +105,7 @@ class WaterPocketServiceImpl(
     }
 
     override fun getOptimizedBalance(): BalanceDTO {
+        logger.info("Optimizing balance")
         // retrieve all loans and optimize operations
         val optimizedOperations = getOptimizedOperations()
 
@@ -116,19 +117,21 @@ class WaterPocketServiceImpl(
     }
 
     private fun getOptimizedOperations(): List<Operation> {
+        logger.info("Optimizing settle operations")
         val allLoans = loanRepository.findAll()
         return GreedyBalanceStrategy(allLoans).execute()
     }
 
     @Transactional
     override fun settleAll(): SettleOperationsDTO {
+        logger.info("Settling all loans")
         val optimizedOperations = getOptimizedOperations()
         val waterPocketMap = retrieveWaterPockets(optimizedOperations)
 
         // settle all debts and remove all loans
         settleDebts(optimizedOperations, waterPocketMap)
         loanRepository.deleteAll()
-
+        logger.info("All loans settled")
         return buildSettleOperationsDTO(waterPocketMap, optimizedOperations)
     }
 

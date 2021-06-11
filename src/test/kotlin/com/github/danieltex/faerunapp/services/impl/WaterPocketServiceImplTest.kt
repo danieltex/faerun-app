@@ -220,7 +220,7 @@ class WaterPocketServiceImplTest {
     }
 
     @Test
-    fun `when full payment should return remove loan`() {
+    fun `when full payment should remove loan`() {
         val creditorId = 123
         val debtorId = 456
         val creditor = newWaterPocket(creditorId, "0.00")
