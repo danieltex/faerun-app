@@ -2,6 +2,8 @@ package com.github.danieltex.faerunapp.it
 
 import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
+import com.github.danieltex.faerunapp.dtos.EventDTO
+import com.github.danieltex.faerunapp.dtos.EventTypeDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.dtos.OperationDetails
 import com.github.danieltex.faerunapp.dtos.OperationType
@@ -21,6 +23,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
+import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
@@ -324,6 +327,71 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         assertEquals(0, operationsToSettle.size)
     }
 
+
+    @DirtiesContext
+    @Test
+    fun `assert events created for each operation`() {
+        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = WaterPocketDTO("Beta", "400.00".toBigDecimal())
+
+        val alphaId = postWaterPocket(alpha).body!!.id!!
+        val betaId = postWaterPocket(beta).body!!.id!!
+
+        // borrows:
+        // alpha -> beta  : 400
+
+        // alpha should pay 400 to beta
+        val loanAlphaBeta = LoanRequestDTO(betaId, "400.00".toBigDecimal())
+        postBorrow(alphaId, loanAlphaBeta)
+        putSettleAll()
+
+
+        val responseAlpha = restTemplate.getForEntity("/water-pockets/$alphaId/events", Array<EventDTO>::class.java)
+        assertEquals(HttpStatus.OK, responseAlpha.statusCode)
+        assertNotNull(responseAlpha.body)
+        val eventsAlpha = responseAlpha.body!!.groupBy { it.event }
+
+        // assert created event
+        assertEquals(1, eventsAlpha[EventTypeDTO.CREATED]!!.size)
+        assertEquals(null, eventsAlpha[EventTypeDTO.CREATED]!![0].target)
+        assertEquals(100.0, eventsAlpha[EventTypeDTO.CREATED]!![0].quantity!!.toDouble())
+
+        // assert borrowed event
+        assertEquals(1, eventsAlpha[EventTypeDTO.BORROW_FROM]!!.size)
+        assertEquals(betaId, eventsAlpha[EventTypeDTO.BORROW_FROM]!![0].target)
+        assertEquals(400.0, eventsAlpha[EventTypeDTO.BORROW_FROM]!![0].quantity!!.toDouble())
+
+        // assert payment event
+        assertEquals(1, eventsAlpha[EventTypeDTO.BORROW_FROM]!!.size)
+        assertEquals(betaId, eventsAlpha[EventTypeDTO.PAY_TO]!![0].target)
+        assertEquals(400.0, eventsAlpha[EventTypeDTO.BORROW_FROM]!![0].quantity!!.toDouble())
+
+        // assert debt settled
+        assertEquals(1, eventsAlpha[EventTypeDTO.SETTLE_DEBTS_TO]!!.size)
+        assertEquals(betaId, eventsAlpha[EventTypeDTO.SETTLE_DEBTS_TO]!![0].target)
+        assertEquals(null, eventsAlpha[EventTypeDTO.SETTLE_DEBTS_TO]!![0].quantity)
+
+        val responseBeta = restTemplate.getForEntity("/water-pockets/$betaId/events", Array<EventDTO>::class.java)
+        assertEquals(HttpStatus.OK, responseAlpha.statusCode)
+        assertNotNull(responseBeta.body)
+        val eventsBeta = responseBeta.body!!.groupBy { it.event }
+
+        // assert received event
+        assertEquals(1, eventsBeta[EventTypeDTO.LOAN_TO]!!.size)
+        assertEquals(alphaId, eventsBeta[EventTypeDTO.LOAN_TO]!![0].target)
+        assertEquals(400.0, eventsBeta[EventTypeDTO.LOAN_TO]!![0].quantity!!.toDouble())
+
+        // assert received event
+        assertEquals(1, eventsBeta[EventTypeDTO.RECEIVE_FROM]!!.size)
+        assertEquals(alphaId, eventsBeta[EventTypeDTO.RECEIVE_FROM]!![0].target)
+        assertEquals(400.0, eventsBeta[EventTypeDTO.RECEIVE_FROM]!![0].quantity!!.toDouble())
+
+        // assert loan settle by target
+        assertEquals(1, eventsBeta[EventTypeDTO.SETTLE_DEBTS_FROM]!!.size)
+        assertEquals(alphaId, eventsBeta[EventTypeDTO.SETTLE_DEBTS_FROM]!![0].target)
+        assertEquals(null, eventsBeta[EventTypeDTO.SETTLE_DEBTS_FROM]!![0].quantity)
+    }
+
     private fun getWaterPocket(id: Int) = restTemplate.getForEntity(
         "/water-pockets/$id",
         WaterPocketDTO::class.java
@@ -368,4 +436,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     )
 }
 
-fun List<OperationDetails>.sumToDouble() = this.map { it.quantity }.reduce { a, b -> a + b }.toDouble()
+private fun List<OperationDetails>.sumToDouble() = this
+    .map { it.quantity }
+    .reduce { a, b -> a + b }
+    .toDouble()

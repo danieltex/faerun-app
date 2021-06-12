@@ -7,6 +7,7 @@ import com.github.danieltex.faerunapp.exceptions.InsufficientQuantityException
 import com.github.danieltex.faerunapp.exceptions.SelfOperationException
 import com.github.danieltex.faerunapp.exceptions.WaterPocketNotFoundException
 import com.github.danieltex.faerunapp.repositories.LoanRepository
+import com.github.danieltex.faerunapp.repositories.WaterPocketEventRepository
 import com.github.danieltex.faerunapp.repositories.WaterPocketRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -23,9 +24,11 @@ class WaterPocketServiceImplTest {
 
     private val waterPocketRepository = mock<WaterPocketRepository>()
     private val loanRepository = mock<LoanRepository>()
+    private val eventRepository = mock<WaterPocketEventRepository>()
     private val waterPocketService = WaterPocketServiceImpl(
         waterPocketRepository,
-        loanRepository
+        loanRepository,
+        eventRepository
     )
 
     @Test
@@ -271,6 +274,17 @@ class WaterPocketServiceImplTest {
 
         val exception = assertThrows<WaterPocketNotFoundException> {
             waterPocketService.findAllDebts(nonExisting)
+        }
+
+        assertEquals("Water Pocket '42' not found", exception.reason)
+    }
+
+    @Test
+    fun `should assert water pocket exists before finding operations`() {
+        val nonExisting = 42
+
+        val exception = assertThrows<WaterPocketNotFoundException> {
+            waterPocketService.findEvents(nonExisting)
         }
 
         assertEquals("Water Pocket '42' not found", exception.reason)

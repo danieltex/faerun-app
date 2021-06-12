@@ -2,6 +2,7 @@ package com.github.danieltex.faerunapp.dtos
 
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
+import com.github.danieltex.faerunapp.entities.WaterPocketEventEntity
 import com.github.danieltex.faerunapp.services.balance.Operation
 
 fun WaterPocketEntity.toDTO(): WaterPocketDTO = WaterPocketDTO(name = name, storage = storage, id = id)
@@ -67,4 +68,11 @@ fun Operation.toReceiveDTO() = OperationDetails(
     operation = OperationType.RECEIVE,
     destinationId = this.debtor,
     quantity = this.quantity
+)
+
+fun WaterPocketEventEntity.toDTO() = EventDTO(
+    event = EventTypeDTO.of(eventType),
+    date = date,
+    target = if (target.id != origin.id) target.id else null,
+    quantity = quantity
 )
