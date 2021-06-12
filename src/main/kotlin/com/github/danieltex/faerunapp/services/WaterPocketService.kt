@@ -1,6 +1,7 @@
 package com.github.danieltex.faerunapp.services
 
 import com.github.danieltex.faerunapp.dtos.BalanceDTO
+import com.github.danieltex.faerunapp.dtos.EventDTO
 import com.github.danieltex.faerunapp.dtos.SettleOperationsDTO
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
@@ -15,4 +16,5 @@ interface WaterPocketService {
     fun findById(id: Int): WaterPocketEntity
     fun getOptimizedBalance(): BalanceDTO
     fun settleAll(): SettleOperationsDTO
+    fun findEvents(id: Int): List<EventDTO>
 }

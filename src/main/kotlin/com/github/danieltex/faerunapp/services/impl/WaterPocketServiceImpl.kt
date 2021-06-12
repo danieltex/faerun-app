@@ -1,18 +1,24 @@
 package com.github.danieltex.faerunapp.services.impl
 
 import com.github.danieltex.faerunapp.dtos.BalanceDTO
+import com.github.danieltex.faerunapp.dtos.EventDTO
 import com.github.danieltex.faerunapp.dtos.SettleOperationsDTO
 import com.github.danieltex.faerunapp.dtos.buildBalanceDTO
 import com.github.danieltex.faerunapp.dtos.buildSettleOperationsDTO
+import com.github.danieltex.faerunapp.dtos.toDTO
+import com.github.danieltex.faerunapp.entities.EventType
+import com.github.danieltex.faerunapp.entities.EventType.*
 import com.github.danieltex.faerunapp.entities.LoanEntity
 import com.github.danieltex.faerunapp.entities.LoanEntityId
 import com.github.danieltex.faerunapp.entities.WaterPocketEntity
+import com.github.danieltex.faerunapp.entities.WaterPocketEventEntity
 import com.github.danieltex.faerunapp.exceptions.InsufficientQuantityException
 import com.github.danieltex.faerunapp.exceptions.InsufficientQuantityException.Companion.INSUFFICIENT_STORAGE_MESSAGE
 import com.github.danieltex.faerunapp.exceptions.InsufficientQuantityException.Companion.OVERPAYMENT_MESSAGE
 import com.github.danieltex.faerunapp.exceptions.SelfOperationException
 import com.github.danieltex.faerunapp.exceptions.WaterPocketNotFoundException
 import com.github.danieltex.faerunapp.repositories.LoanRepository
+import com.github.danieltex.faerunapp.repositories.WaterPocketEventRepository
 import com.github.danieltex.faerunapp.repositories.WaterPocketRepository
 import com.github.danieltex.faerunapp.services.WaterPocketService
 import com.github.danieltex.faerunapp.services.balance.GreedyBalanceStrategy
@@ -25,11 +31,13 @@ import java.math.BigDecimal
 @Service
 class WaterPocketServiceImpl(
     private val waterPocketRepository: WaterPocketRepository,
-    private val loanRepository: LoanRepository
+    private val loanRepository: LoanRepository,
+    private val eventRepository: WaterPocketEventRepository
 ) : WaterPocketService {
 
     override fun save(waterPocket: WaterPocketEntity): WaterPocketEntity {
         val result = waterPocketRepository.save(waterPocket)
+        newEvent(origin = result, target = result, eventType = CREATED, quantity = result.storage)
         logger.info("New water pocket: {}", result)
         return result
     }
@@ -59,6 +67,9 @@ class WaterPocketServiceImpl(
         debtor.storage += quantity
         waterPocketRepository.save(creditor)
         waterPocketRepository.save(debtor)
+
+        newEvent(origin = debtor, target = creditor, eventType = BORROW_FROM, quantity = quantity)
+        newEvent(origin = creditor, target = debtor, eventType = LOAN_TO, quantity = quantity)
 
         return debtor
     }
@@ -90,6 +101,9 @@ class WaterPocketServiceImpl(
         // remove loan if fully payed
         if (loan.quantity.compareTo(quantity) == 0) {
             loanRepository.delete(loan)
+            newEvent(origin = debtor, target = creditor, eventType = SETTLE_DEBTS_TO)
+            newEvent(origin = creditor, target = debtor, eventType = SETTLE_DEBTS_FROM)
+
         } else {
             loan.quantity -= quantity
             loanRepository.save(loan)
@@ -100,6 +114,8 @@ class WaterPocketServiceImpl(
         debtor.storage -= quantity
         waterPocketRepository.save(creditor)
         waterPocketRepository.save(debtor)
+        newEvent(origin = debtor, target = creditor, eventType = PAY_TO, quantity = quantity)
+        newEvent(origin = creditor, target = debtor, eventType = RECEIVE_FROM, quantity = quantity)
 
         return debtor
     }
@@ -130,22 +146,45 @@ class WaterPocketServiceImpl(
 
         // settle all debts and remove all loans
         settleDebts(optimizedOperations, waterPocketMap)
+        val settleLoanEvents = makeSettleLoanEvents()
+        eventRepository.saveAll(settleLoanEvents)
         loanRepository.deleteAll()
         logger.info("All loans settled")
         return buildSettleOperationsDTO(waterPocketMap, optimizedOperations)
+    }
+
+    private fun makeSettleLoanEvents() = loanRepository.findAll()
+        .map {
+            listOf(
+                WaterPocketEventEntity(origin = it.id.debtor, target = it.id.creditor, eventType = SETTLE_DEBTS_TO),
+                WaterPocketEventEntity(origin = it.id.creditor, target = it.id.debtor, eventType = SETTLE_DEBTS_FROM)
+            )
+        }.flatten()
+
+    override fun findEvents(id: Int): List<EventDTO> {
+        findById(id)
+        return eventRepository
+            .findByOriginId(id)
+            .map { it.toDTO() }
     }
 
     private fun settleDebts(
         optimizedOperations: List<Operation>,
         waterPocketMap: Map<Int, WaterPocketEntity>
     ) {
+
+        val events = mutableListOf<WaterPocketEventEntity>()
         optimizedOperations.forEach {
             val creditor = waterPocketMap.getValue(it.creditor)
             val debtor = waterPocketMap.getValue(it.debtor)
             creditor.storage += it.quantity
             debtor.storage -= it.quantity
+
+            events += WaterPocketEventEntity(origin = debtor, target = creditor, eventType = PAY_TO, quantity = it.quantity)
+            events += WaterPocketEventEntity(origin = creditor, target = debtor, eventType = RECEIVE_FROM, quantity = it.quantity)
         }
         waterPocketRepository.saveAll(waterPocketMap.values)
+        eventRepository.saveAll(events)
     }
 
     private fun retrieveWaterPockets(optimizedOperations: List<Operation>): Map<Int, WaterPocketEntity> {
@@ -164,6 +203,22 @@ class WaterPocketServiceImpl(
 
     override fun findAll(): List<WaterPocketEntity> {
         return waterPocketRepository.findAll().toList()
+    }
+
+    private fun newEvent(
+        origin: WaterPocketEntity,
+        target: WaterPocketEntity,
+        eventType: EventType,
+        quantity: BigDecimal? = null
+    ) {
+        eventRepository.save(
+            WaterPocketEventEntity(
+                origin = origin,
+                eventType = eventType,
+                quantity = quantity,
+                target = target
+            )
+        )
     }
 
     companion object {

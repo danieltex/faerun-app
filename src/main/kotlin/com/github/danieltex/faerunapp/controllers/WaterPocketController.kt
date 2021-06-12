@@ -2,6 +2,7 @@ package com.github.danieltex.faerunapp.controllers
 
 import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
+import com.github.danieltex.faerunapp.dtos.EventDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.dtos.SettleOperationsDTO
@@ -87,6 +88,11 @@ class WaterPocketController(
     @PutMapping("/settle-all", consumes = [MediaType.ALL_VALUE])
     fun settleAll(): SettleOperationsDTO {
         return waterPocketService.settleAll()
+    }
+
+    @GetMapping("/{id}/events", consumes = [MediaType.ALL_VALUE])
+    fun events(@PathVariable("id") id: Int): List<EventDTO> {
+        return waterPocketService.findEvents(id)
     }
 }
 
