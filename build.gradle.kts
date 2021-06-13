@@ -27,6 +27,8 @@ dependencies {
 	runtimeOnly("mysql:mysql-connector-java")
 	implementation("javax.validation", "validation-api", "2.0.1.Final")
 	implementation("org.hibernate.validator", "hibernate-validator", "7.0.1.Final")
+	implementation("org.springdoc:springdoc-openapi-ui:1.5.9")
+	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.9")
 
 	testRuntimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
