@@ -351,6 +351,13 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         assertNotNull(responseAlpha.body)
         val eventsAlpha = responseAlpha.body!!.groupBy { it.event }
 
+        val sortedByDescendingDate = responseAlpha.body!!
+            .toList()
+            .sortedByDescending { it.date }
+
+        // assert most recent event first
+        assertEquals(sortedByDescendingDate, responseAlpha.body!!.toList())
+
         // assert created event
         assertEquals(1, eventsAlpha[EventTypeDTO.CREATED]!!.size)
         assertEquals(null, eventsAlpha[EventTypeDTO.CREATED]!![0].target)

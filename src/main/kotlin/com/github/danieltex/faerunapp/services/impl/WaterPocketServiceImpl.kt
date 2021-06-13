@@ -164,7 +164,7 @@ class WaterPocketServiceImpl(
     override fun findEvents(id: Int): List<EventDTO> {
         findById(id)
         return eventRepository
-            .findByOriginId(id)
+            .findByOriginIdOrderByDateDesc(id)
             .map { it.toDTO() }
     }
 
