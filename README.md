@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/danieltex/faerun-app/branch/main/graph/badge.svg?token=DKMRP2QKPC)](https://codecov.io/gh/danieltex/faerun-app)
+
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
@@ -5,10 +7,10 @@
     <img src="images/cave-lake-4805991_960_720.jpg" alt="Logo" width="200" height="200">
   </a>
 
-  <h3 align="center">O equilibrio de Faerun</h3>
+  <h3 align="center">Faerun Balance</h3>
 
   <p align="center">
-    API para gerenciar o estoque de bolsões de água e empréstimos entre eles
+    An API to manage water pockets storage and loans between them
   </p>
 </p>
 
@@ -44,9 +46,17 @@
 
 ### Built With
 
-* []()
-* []()
-* []()
+* [Gradle](https://gradle.org/) and [Kotlin DSL](https://docs.gradle.org/current/userguide/kotlin_dsl.html)
+* [Spring Boot 2.5.1](https://spring.io/projects/spring-boot)
+* [SpringDoc OpenAPI](https://github.com/springdoc/springdoc-openapi)
+* [JDK 11](https://www.oracle.com/java/technologies/javase/jdk11-readme.html)
+* [Kotlin 1.5](https://kotlinlang.org/)
+* [MySQL 8.0](https://dev.mysql.com/)
+* [H2 Database](https://www.h2database.com/html/main.html) (for integration testing)
+* [Docker](https://www.docker.com/)
+* [JaCoCo 0.8.7](https://github.com/jacoco/jacoco)
+* [Codecov](https://about.codecov.io/) for code coverage reports triggered by Github Actions
+* [Mockito-Kotlin](https://github.com/mockito/mockito-kotlin/)
 
 
 
@@ -71,25 +81,62 @@ To get a local copy up and running follow these simple steps.
 <!-- USAGE EXAMPLES -->
 ## Usage
 
+### Run the full application through docker-compose:
 1. Building the source
 
    `./gradlew clean build`
 
-2. Running
+2. Build the docker image:
+
+   `docker build -t faerunapp .`
+
+3. Running
    
    Start the database and app with docker compose:
    
    `docker-compose up`
-   
+
+### Run the database with docker-compose and start the application manually:
+1. Start the database
+
+   `docker-compose up db`
+
+2. Build and run the application with gradle or start the `FaerunAppApplicationKt` class through your IDE of preference
+
+   `./gradlew bootRun`
+
+The application will start on the port `5000`
+
+### Examples
+
+1. Create a new water pocket
+
+```bash
+curl --location --request POST 'http://localhost:5000/water-pockets' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "name": "Itaipu",
+    "storage": 62200000.0
+}'
+```
+
+Response:
+```json
+{
+    "name": "Itaipu",
+    "storage": 62200000.0,
+    "id": 1
+}
+```
+
+More examples can be seen at the API Documentation at http://localhost:5000/swagger-ui.html
+
 <!-- CONTACT -->
 ## Contact
 
 Daniel Teixeira dos Santos [![mail][gmail-shield]][gmail-url] [![LinkedIn][linkedin-shield]][linkedin-url]
 
 Project Link: [https://github.com/danieltex/faerun-app](https://github.com/danieltex/faerun-app)
-
-[![codecov](https://codecov.io/gh/danieltex/faerun-app/branch/main/graph/badge.svg?token=DKMRP2QKPC)](https://codecov.io/gh/danieltex/faerun-app)
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->

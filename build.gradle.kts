@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.github.danieltex"
-version = "1.2.0-SNAPSHOT"
+version = "1.2.0"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
@@ -20,13 +20,15 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("mysql:mysql-connector-java")
-	implementation("javax.validation", "validation-api", "2.0.1.Final")
-	implementation("org.hibernate.validator", "hibernate-validator", "7.0.1.Final")
+	implementation("org.springdoc:springdoc-openapi-ui:1.5.9")
+	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.9")
+	implementation("org.springdoc:springdoc-openapi-kotlin:1.5.9")
 
 	testRuntimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -35,7 +37,7 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
+		freeCompilerArgs = listOf("-Xjsr305=strict", "-Xemit-jvm-type-annotations")
 		jvmTarget = "11"
 	}
 }

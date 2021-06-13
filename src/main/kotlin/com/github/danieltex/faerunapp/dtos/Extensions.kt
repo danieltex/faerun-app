@@ -7,6 +7,8 @@ import com.github.danieltex.faerunapp.services.balance.Operation
 
 fun WaterPocketEntity.toDTO(): WaterPocketDTO = WaterPocketDTO(name = name, storage = storage, id = id)
 
+fun NewWaterPocketDTO.toEntity() = WaterPocketEntity(name = name, storage = storage)
+
 fun WaterPocketDTO.toEntity(): WaterPocketEntity = WaterPocketEntity(name = name, storage = storage, id = id)
 
 fun Collection<LoanEntity>.toDTO(): DebitListDTO = DebitListDTO(debts = this.map(LoanEntity::toDTO))
