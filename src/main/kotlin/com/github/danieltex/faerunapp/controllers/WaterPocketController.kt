@@ -4,6 +4,7 @@ import com.github.danieltex.faerunapp.dtos.BalanceDTO
 import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.EventDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.NewWaterPocketDTO
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
 import com.github.danieltex.faerunapp.dtos.SettleOperationsDTO
 import com.github.danieltex.faerunapp.dtos.WaterPocketBatchDTO
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import javax.validation.Valid
 
 @RestController
 @RequestMapping(
@@ -35,6 +37,7 @@ class WaterPocketController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    fun createWaterPocket(@Valid @RequestBody waterPocket: NewWaterPocketDTO): WaterPocketDTO {
     fun createWaterPocket(@RequestBody waterPocket: WaterPocketDTO): WaterPocketDTO {
         val created = waterPocketService.save(waterPocket.toEntity())
         return created.toDTO()

@@ -5,6 +5,7 @@ import com.github.danieltex.faerunapp.dtos.DebitListDTO
 import com.github.danieltex.faerunapp.dtos.EventDTO
 import com.github.danieltex.faerunapp.dtos.EventTypeDTO
 import com.github.danieltex.faerunapp.dtos.LoanRequestDTO
+import com.github.danieltex.faerunapp.dtos.NewWaterPocketDTO
 import com.github.danieltex.faerunapp.dtos.OperationDetails
 import com.github.danieltex.faerunapp.dtos.OperationType
 import com.github.danieltex.faerunapp.dtos.PaymentRequestDTO
@@ -29,7 +30,7 @@ import java.util.*
 class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @Test
     fun `Assert create water pocket returns valid object with id`() {
-        val waterPocket = WaterPocketDTO("Callagan", "700.20".toBigDecimal())
+        val waterPocket = NewWaterPocketDTO("Callagan", "700.20".toBigDecimal())
 
         val response = postWaterPocket(waterPocket)
 
@@ -55,8 +56,24 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     }
 
     @Test
+    fun `Assert result bad request when negative storage`() {
+        val noNameWatterPocket = """
+            {
+                "name": "Negative Storage WP"
+                "storage": -700.8
+            }
+        """.trimIndent()
+        val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
+        val request = HttpEntity(noNameWatterPocket, headers)
+
+        val response = restTemplate.postForEntity("/water-pockets", request, String::class.java)
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
     fun `Assert can create and retrieve a water pocket by id`() {
-        val waterPocket = WaterPocketDTO("Rei", "1000.1".toBigDecimal())
+        val waterPocket = NewWaterPocketDTO("Rei", "1000.1".toBigDecimal())
 
         val postResponse = postWaterPocket(waterPocket)
         val getResponse = getWaterPocket(postResponse.body!!.id!!)
@@ -80,9 +97,9 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @Test
     fun `Assert can retrieve created water pockets`() {
         val wpRequests = listOf(
-            WaterPocketDTO("Alpha", "1000.1".toBigDecimal()),
-            WaterPocketDTO("Beta", "1000.1".toBigDecimal()),
-            WaterPocketDTO("Gamma", "1000.1".toBigDecimal())
+            NewWaterPocketDTO("Alpha", "1000.1".toBigDecimal()),
+            NewWaterPocketDTO("Beta", "1000.1".toBigDecimal()),
+            NewWaterPocketDTO("Gamma", "1000.1".toBigDecimal())
         )
 
         val wpResponses = wpRequests
@@ -98,8 +115,8 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
 
     @Test
     fun `Assert when borrows invalid amount returns bad request status`() {
-        val creditor = WaterPocketDTO("From", "10.00".toBigDecimal())
-        val debtor = WaterPocketDTO("To", "0.00".toBigDecimal())
+        val creditor = NewWaterPocketDTO("WpFrom", "10.00".toBigDecimal())
+        val debtor = NewWaterPocketDTO("WpTo", "0.00".toBigDecimal())
 
         val creditorResponse = postWaterPocket(creditor).body!!
         val debtorResponse = postWaterPocket(debtor).body!!
@@ -117,8 +134,8 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @DirtiesContext
     @Test
     fun `Assert when borrows valid amount returns updated storage`() {
-        val creditor = WaterPocketDTO("FromWp", "50.00".toBigDecimal())
-        val debtor = WaterPocketDTO("ToWp", "10.00".toBigDecimal())
+        val creditor = NewWaterPocketDTO("FromWp", "50.00".toBigDecimal())
+        val debtor = NewWaterPocketDTO("ToWp", "10.00".toBigDecimal())
 
         val creditorId = postWaterPocket(creditor).body!!.id!!
         val debtorId = postWaterPocket(debtor).body!!.id!!
@@ -134,9 +151,9 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @Test
     fun `Assert can retrieve debts contracted`() {
         // create 3 water pockets
-        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
-        val beta = WaterPocketDTO("Beta", "100.00".toBigDecimal())
-        val gamma = WaterPocketDTO("Gamma", "100.00".toBigDecimal())
+        val alpha = NewWaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = NewWaterPocketDTO("Beta", "100.00".toBigDecimal())
+        val gamma = NewWaterPocketDTO("Gamma", "100.00".toBigDecimal())
         val idAlpha = postWaterPocket(alpha).body!!.id!!
         val idBeta = postWaterPocket(beta).body!!.id!!
         val idGamma = postWaterPocket(gamma).body!!.id!!
@@ -177,8 +194,8 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @DirtiesContext
     @Test
     fun `Assert when pays valid amount returns updated storage`() {
-        val debtor = WaterPocketDTO("Debtor", "10.00".toBigDecimal())
-        val creditor = WaterPocketDTO("Creditor", "40.00".toBigDecimal())
+        val debtor = NewWaterPocketDTO("Debtor", "10.00".toBigDecimal())
+        val creditor = NewWaterPocketDTO("Creditor", "40.00".toBigDecimal())
 
         val debtorId = postWaterPocket(debtor).body!!.id!!
         val creditorId = postWaterPocket(creditor).body!!.id!!
@@ -197,10 +214,10 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @DirtiesContext
     @Test
     fun `assert can generate valid balance`() {
-        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
-        val beta = WaterPocketDTO("Beta", "400.00".toBigDecimal())
-        val gamma = WaterPocketDTO("Gamma", "1000.00".toBigDecimal())
-        val delta = WaterPocketDTO("Delta", "0.00".toBigDecimal())
+        val alpha = NewWaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = NewWaterPocketDTO("Beta", "400.00".toBigDecimal())
+        val gamma = NewWaterPocketDTO("Gamma", "1000.00".toBigDecimal())
+        val delta = NewWaterPocketDTO("Delta", "0.00".toBigDecimal())
 
         val alphaId = postWaterPocket(alpha).body!!.id!!
         val betaId = postWaterPocket(beta).body!!.id!!
@@ -265,10 +282,10 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @DirtiesContext
     @Test
     fun `assert settling all debts generates a valid list of operations and storages`() {
-        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
-        val beta = WaterPocketDTO("Beta", "400.00".toBigDecimal())
-        val gamma = WaterPocketDTO("Gamma", "1000.00".toBigDecimal())
-        val delta = WaterPocketDTO("Delta", "0.00".toBigDecimal())
+        val alpha = NewWaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = NewWaterPocketDTO("Beta", "400.00".toBigDecimal())
+        val gamma = NewWaterPocketDTO("Gamma", "1000.00".toBigDecimal())
+        val delta = NewWaterPocketDTO("Delta", "0.00".toBigDecimal())
 
         val alphaId = postWaterPocket(alpha).body!!.id!!
         val betaId = postWaterPocket(beta).body!!.id!!
@@ -331,8 +348,8 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
     @DirtiesContext
     @Test
     fun `assert events created for each operation`() {
-        val alpha = WaterPocketDTO("Alpha", "100.00".toBigDecimal())
-        val beta = WaterPocketDTO("Beta", "400.00".toBigDecimal())
+        val alpha = NewWaterPocketDTO("Alpha", "100.00".toBigDecimal())
+        val beta = NewWaterPocketDTO("Beta", "400.00".toBigDecimal())
 
         val alphaId = postWaterPocket(alpha).body!!.id!!
         val betaId = postWaterPocket(beta).body!!.id!!
@@ -429,7 +446,7 @@ class IntegrationTests(@Autowired private val restTemplate: TestRestTemplate) {
         WaterPocketDTO::class.java
     )
 
-    private fun postWaterPocket(dto: WaterPocketDTO) = restTemplate.postForEntity(
+    private fun postWaterPocket(dto: NewWaterPocketDTO) = restTemplate.postForEntity(
         "/water-pockets",
         dto,
         WaterPocketDTO::class.java
